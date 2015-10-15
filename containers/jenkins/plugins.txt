@@ -1,0 +1,10 @@
+git
+swarm
+docker-plugin
+job-dsl
+ssh-slaves
+multiple-scms
+durable-task
+scm-api
+git-client
+locale
