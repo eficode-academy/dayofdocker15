@@ -9,6 +9,8 @@ apache:
 #    - /home/docker/containers/home/apache/certs/DigiCertCA.crt:/usr/local/apache2/conf/server-ca.crt
 #    - /home/docker/containers/home/apache/certs/star_novelda_no.crt:/usr/local/apache2/conf/server.crt
 #    - /home/docker/containers/home/apache/certs/star_novelda_no.key:/usr/local/apache2/conf/server.key
+  volumes_from:
+     - webdata
   links:
     - jenkins
     - artifactory
@@ -22,6 +24,8 @@ jenkins:
    - "50000:50000"
 #  volumes:
 #   - /home/docker/containers/home/jenkins/jenkins_home:/var/jenkins_home 
+  volumes_from:
+    - jenkinsdata
   command: --prefix=/jenkins
 artifactory:
   # Build artifactory image from the artifactory/ directory .
@@ -32,17 +36,20 @@ artifactory:
 #   - /home/docker/containers/home/artifactory/data:/artifactory/data 
 #   - /home/docker/containers/home/artifactory/logs:/artifactory/logs 
 #   - /home/docker/containers/home/artifactory/backup:/artifactory/backup
+  volumes_from:
+    - artifactorydata
   environment:
    - JAVA_OPTS='-Djsse.enableSNIExtension=false'
 # cadvisor is from google. It is Container Advisor.
-#cadvisor:
-#  image: google/cadvisor:latest  
-#  volumes:
-#  - /:/rootfs:ro
-#  - /var/run:/var/run:rw
-#  - /sys:/sys:ro
-#  - /var/lib/docker/:/var/lib/docker:ro
-#  ports:
-#  # The following will change (removed) when I make this a part of Apache reverse proxy too.
-#  - "8080:8080"
+cadvisor:
+  image: google/cadvisor:latest  
+  volumes:
+  - /:/rootfs:ro
+  - /var/run:/var/run:rw
+  - /sys:/sys:ro
+  - /var/lib/docker/:/var/lib/docker:ro
+  ports:
+  - "8080:8080"
+  # The above will change (removed) when I make this a part of Apache reverse proxy too.
+
 

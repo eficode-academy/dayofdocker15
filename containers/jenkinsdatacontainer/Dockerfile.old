@@ -1,0 +1,6 @@
+FROM scratch
+
+# Jenkins home as a volume
+VOLUME /var/jenkins_home
+CMD Nothing here
+

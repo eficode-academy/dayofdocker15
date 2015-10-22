@@ -14,6 +14,7 @@ USER root
 ENV TZ=Europe/Oslo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 USER jenkins
+VOLUME /var/jenkins_home 
 
 
 # The following passes the following parameter to the jenkins container. 
