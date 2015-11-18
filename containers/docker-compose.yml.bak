@@ -1,0 +1,55 @@
+apache:
+  image: httpd:2.4
+  ports:
+    - "80:80"
+    - "443:443"
+#  volumes:
+#    - /home/docker/containers/home/apache/html:/usr/local/apache2/htdocs
+#    - /home/docker/containers/home/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+#    - /home/docker/containers/home/apache/certs/DigiCertCA.crt:/usr/local/apache2/conf/server-ca.crt
+#    - /home/docker/containers/home/apache/certs/star_novelda_no.crt:/usr/local/apache2/conf/server.crt
+#    - /home/docker/containers/home/apache/certs/star_novelda_no.key:/usr/local/apache2/conf/server.key
+  volumes_from:
+     - webdata
+  links:
+    - jenkins
+    - artifactory
+jenkins:
+  # Build the jenkins image from the jenkins/ directory.
+  # We need to do it because:
+  #  (a) we need to add plugins to jenkins.
+  #  (b) We need to fix the timezone in Dockerfile, which cannot be done at runtime.
+  build: jenkins/
+  ports: 
+   - "50000:50000"
+#  volumes:
+#   - /home/docker/containers/home/jenkins/jenkins_home:/var/jenkins_home 
+  volumes_from:
+    - jenkinsdata
+  command: --prefix=/jenkins
+artifactory:
+  # Build artifactory image from the artifactory/ directory .
+  # We need to do it because we need to fix the TimeZone, which can only be done in Dockerfile
+  build: artifactory/
+  #  image: mattgruter/artifactory
+#  volumes:
+#   - /home/docker/containers/home/artifactory/data:/artifactory/data 
+#   - /home/docker/containers/home/artifactory/logs:/artifactory/logs 
+#   - /home/docker/containers/home/artifactory/backup:/artifactory/backup
+  volumes_from:
+    - artifactorydata
+  environment:
+   - JAVA_OPTS='-Djsse.enableSNIExtension=false'
+# cadvisor is from google. It is Container Advisor.
+cadvisor:
+  image: google/cadvisor:latest  
+  volumes:
+  - /:/rootfs:ro
+  - /var/run:/var/run:rw
+  - /sys:/sys:ro
+  - /var/lib/docker/:/var/lib/docker:ro
+  ports:
+  - "8080:8080"
+  # The above will change (removed) when I make this a part of Apache reverse proxy too.
+
+
