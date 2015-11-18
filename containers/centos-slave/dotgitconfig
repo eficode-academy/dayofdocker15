@@ -1,0 +1,9 @@
+[user]
+	name = builduser
+	email = builduser@exmaple.com
+# Note: Using the "cache" helper is not feasible as it fogets the credentials after few minutes.
+#       The "store" helper keeps the credentials in ~/.git-credentials forever - in plain text.
+[credential]
+	helper = store
+
+
