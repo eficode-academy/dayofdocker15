@@ -13,7 +13,7 @@ jenkins:
    - "8080:8080"
    - "50000:50000"
   volumes:
-   - /home/student/dayofdocker15/containers/home/jenkins/jenkins_home:/var/jenkins_home 
+   - /opt/containers/jenkins_home:/var/jenkins_home 
   command: --prefix=/jenkins
 artifactory:
   # Build artifactory image from the artifactory/ directory .
@@ -22,9 +22,9 @@ artifactory:
   ports:
    - "8090:8080"
   volumes:
-   - /home/student/dayofdocker15/containers/home/artifactory/data:/artifactory/data 
-   - /home/student/dayofdocker15/containers/home/artifactory/logs:/artifactory/logs 
-   - /home/student/dayofdocker15/containers/home/artifactory/backup:/artifactory/backup
+   - /opt/containers/artifactory/data:/artifactory/data 
+   - /opt/containers/artifactory/logs:/artifactory/logs 
+   - /opt/containers/artifactory/backup:/artifactory/backup
   environment:
    - JAVA_OPTS='-Djsse.enableSNIExtension=false'
 
