@@ -14,5 +14,5 @@ If you want to do something manually to these directories, you need to use sudo.
 The user student is granted sudo access.
 
 On the host, the user is member of both docker and admin groups. Created as:
-# useradd -m  -G docker,admin  -s /bin/bash -c "Student" student
+root# useradd -m  -G docker,admin  -s /bin/bash -c "Student" student
 
