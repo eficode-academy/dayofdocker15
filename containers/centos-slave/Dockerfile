@@ -33,9 +33,9 @@ COPY dotgitconfig /home/builduser/.gitconfig
 
 ######################################################################################
 # Use image as:
-# sudo docker run --rm -it  praqma/centos:6.7 bash
+# sudo docker run --rm -it  dod/centos:6.7 bash
 
 # Build this image with: 
-# sudo docker build --rm -t praqma/centos:6.7 .
+# sudo docker build --rm -t dod/centos:6.7 .
 
 
