@@ -2,26 +2,28 @@ apache:
   # Build from Dockerfile because we want to fix TimeZone as well as have httpd.conf and index.html cooked in it.
   build: apache/
   ports:
-    - "80:80"
+   - "80:80"
+  volumes:
+   # Fix time and timezone of the container.
+   - /etc/localtime:/etc/localtime
 jenkins:
   # Build the jenkins image from the jenkins/ directory.
-  # We need to do it because:
-  #  (a) we need to add plugins to jenkins.
-  #  (b) We need to fix the timezone in Dockerfile, which cannot be done at runtime.
+  # We need to do it because we need to add plugins to jenkins.
   build: jenkins/
   ports: 
    - "8080:8080"
    - "50000:50000"
   volumes:
+   - /etc/localtime:/etc/localtime
    - /opt/containers/jenkins_home:/var/jenkins_home 
   command: --prefix=/jenkins
 artifactory:
-  # Build artifactory image from the artifactory/ directory .
-  # We need to do it because we need to fix the TimeZone, which can only be done in Dockerfile
-  build: artifactory/
+  image: mattgruter/artifactory
+  ## build: artifactory/
   ports:
    - "8090:8080"
   volumes:
+   - /etc/localtime:/etc/localtime
    - /opt/containers/artifactory/data:/artifactory/data 
    - /opt/containers/artifactory/logs:/artifactory/logs 
    - /opt/containers/artifactory/backup:/artifactory/backup
@@ -31,11 +33,12 @@ registry:
   # Note: registry needs Docker daemon to run with: "-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock --insecure-registry <REGISTRY_HOSTNAME>:5000"
   # Question: How do we know the name of REGISTRY_HOSTNAME in advance? or what value do I fill in there?
   # Build registry image from registry directory.
-  # We need to do it because we need to fix the TimeZone, which can only be done in Dockerfile
-  build: registry/
+  # build: registry/
+  image: registry
   ports:
    - "5000:5000"
   volumes:
    # For some strange reason Docker registry container stores the images in /tmp/registry .
+   - /etc/localtime:/etc/localtime
    - /opt/containers/registry:/tmp/registry
 
