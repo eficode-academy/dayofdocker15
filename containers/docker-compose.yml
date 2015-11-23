@@ -36,5 +36,6 @@ registry:
   ports:
    - "5000:5000"
   volumes:
+   # For some strange reason Docker registry container stores the images in /tmp/registry .
    - /opt/containers/registry:/tmp/registry
 
