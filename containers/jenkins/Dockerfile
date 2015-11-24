@@ -1,6 +1,11 @@
 FROM jenkins
 
 # There was no need for a custom image when jenkins official image was sufficient.
+USER root
+RUN apt-get update \
+      && apt-get install -y sudo \
+      && rm -rf /var/lib/apt/lists/*
+RUN echo "jenkins ALL=NOPASSWD: ALL" >> /etc/sudoers
 
 # However we need to add plugins to Jenkins
 # So to make that work, we need a Dockerfile for jenkins and create our own jenkins image.
@@ -11,6 +16,7 @@ FROM jenkins
 CMD ["--prefix=/jenkins"]
 
 # Add plugins to Jenkins:
+USER jenkins
 COPY plugins.txt /usr/share/jenkins/ref/
 RUN /usr/local/bin/plugins.sh /usr/share/jenkins/ref/plugins.txt
 
