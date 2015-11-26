@@ -6,15 +6,12 @@ apache:
   volumes:
    # Fix time and timezone of the container.
    - /etc/localtime:/etc/localtime
-  links:
-   - jenkins
-   - artifactory
-   - registry
 jenkins:
   # Build the jenkins image from the jenkins/ directory.
   # We need to do it because we need to add plugins to jenkins.
   build: jenkins/
   ports: 
+   - "8080:8080"
    - "50000:50000"
   volumes:
    - /etc/localtime:/etc/localtime
@@ -23,6 +20,8 @@ jenkins:
 artifactory:
   image: mattgruter/artifactory
   ## build: artifactory/
+  ports:
+   - "8090:8080"
   volumes:
    - /etc/localtime:/etc/localtime
    - /opt/containers/artifactory/data:/artifactory/data 
@@ -36,8 +35,8 @@ registry:
   # Build registry image from registry directory.
   # build: registry/
   image: registry:2
-  # ports:
-  #  - "5000:5000"
+  ports:
+   - "5000:5000"
   volumes:
    # For some strange reason Docker registry container stores the images in /tmp/registry .
    - /etc/localtime:/etc/localtime
