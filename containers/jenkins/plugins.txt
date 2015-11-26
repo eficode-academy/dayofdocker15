@@ -1,3 +1,5 @@
+# An error at Jenkins startup suggested to load token-macro
+token-macro
 git
 swarm
 docker-plugin
