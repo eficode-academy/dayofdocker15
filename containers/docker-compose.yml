@@ -38,8 +38,6 @@ artifactory:
    - /opt/containers/artifactory/backup:/artifactory/backup
   environment:
    - JAVA_OPTS='-Djsse.enableSNIExtension=false'
-   links:
-     - jenkins
 registry:
   # Note: registry needs Docker daemon to run with: "-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock --insecure-registry <REGISTRY_HOSTNAME>:5000"
   # Question: How do we know the name of REGISTRY_HOSTNAME in advance? or what value do I fill in there?
