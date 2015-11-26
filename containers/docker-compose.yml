@@ -25,6 +25,11 @@ jenkins:
   links:
     - registry
     - artifactory
+slave:
+  build: slave/
+  links:
+    - jenkins
+    - artifactory
 artifactory:
   image: mattgruter/artifactory
   hostname: artifactory
