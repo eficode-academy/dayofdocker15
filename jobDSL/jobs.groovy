@@ -8,7 +8,7 @@ job('tag-version'){
       }
       configure {
         it / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
-          'includeRegions' 'version.txt'
+          'includedRegions' 'version.txt'
         }
       }
     }
