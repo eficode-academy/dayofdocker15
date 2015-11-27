@@ -1,8 +1,8 @@
 # Load testing / benchmarking with Siege
 
-siege - An HTTP/HTTPS stress tester
+siege - A HTTP/HTTPS stress tester
 
-[Siege man page](http://linux.die.net/man/1/siege)
+[Siege homepage](https://www.joedog.org/siege-home/) | [Siege man page](http://linux.die.net/man/1/siege)
 
 
 ## Docker image
