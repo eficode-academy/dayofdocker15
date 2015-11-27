@@ -17,8 +17,9 @@ job('tag-version'){
     scm('H/5 * * * *')
   }
   steps {
-    shell('[ ! -f version.txt ] && exit 1')
-    shell('git tag -a -m "Tag: $(cat version.txt)" $(cat version.txt)')
-    shell('git push --tags')
+    shell('''#!/bin/bash
+[ ! -f version.txt ] && exit 1
+git tag -a -m "Tag: $(cat version.txt)" $(cat version.txt)
+git push --tags''')
   }
 }
