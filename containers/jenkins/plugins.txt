@@ -8,3 +8,7 @@ durable-task
 scm-api
 git-client
 locale
+credentials
+ssh-credentials
+token-macro
+
