@@ -6,6 +6,11 @@ job('tag-version'){
         name('origin')
         url('https://github.com/drBosse/dayofdocker15.git')
       }
+      configure {
+        it / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
+          'includeRegions' 'version.txt'
+        }
+      }
     }
   }
   triggers {
