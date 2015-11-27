@@ -1,42 +1,31 @@
 apache:
   # Build from Dockerfile because we want to fix TimeZone as well as have httpd.conf and index.html cooked in it.
   build: apache/
-  hostname: apache
   ports:
    - "80:80"
   volumes:
    # Fix time and timezone of the container.
    - /etc/localtime:/etc/localtime
-  links:
-   - jenkins
-   - artifactory
-   - registry
 jenkins:
   # Build the jenkins image from the jenkins/ directory.
   # We need to do it because we need to add plugins to jenkins.
   build: jenkins/
-  hostname: jenkins
-  ports:
+  ports: 
    - "8080:8080"
    - "50000:50000"
   volumes:
    - /etc/localtime:/etc/localtime
-   - /opt/containers/jenkins_home:/var/jenkins_home
-   - /var/run/docker.sock:/var/run/docker.sock
-   - /usr/bin/docker:/usr/bin/docker
-   - /usr/lib/x86_64-linux-gnu/libapparmor.so.1.1.0:/lib/x86_64-linux-gnu/libapparmor.so.1
+   - /opt/containers/jenkins_home:/var/jenkins_home 
   command: --prefix=/jenkins
-  links:
-    - registry
-    - artifactory
 artifactory:
   image: mattgruter/artifactory
-  hostname: artifactory
   ## build: artifactory/
+  ports:
+   - "8090:8080"
   volumes:
    - /etc/localtime:/etc/localtime
-   - /opt/containers/artifactory/data:/artifactory/data
-   - /opt/containers/artifactory/logs:/artifactory/logs
+   - /opt/containers/artifactory/data:/artifactory/data 
+   - /opt/containers/artifactory/logs:/artifactory/logs 
    - /opt/containers/artifactory/backup:/artifactory/backup
   environment:
    - JAVA_OPTS='-Djsse.enableSNIExtension=false'
@@ -46,7 +35,6 @@ registry:
   # Build registry image from registry directory.
   # build: registry/
   image: registry:2
-  hostname: registry
   ports:
    - "5000:5000"
   volumes:
@@ -56,3 +44,4 @@ registry:
    # - /opt/containers/registry:/tmp/registry
    # Registry:2 uses /var/lib/registry for storage
    - /opt/containers/registry:/var/lib/registry
+
