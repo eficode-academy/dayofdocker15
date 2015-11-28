@@ -19,7 +19,20 @@ job('tag-version'){
   steps {
     shell('''#!/bin/bash
 [ ! -f version.txt ] && exit 1
-git tag -a -m "Tag: $(cat version.txt)" $(cat version.txt)
-git push --tags''')
+VERSION=$(cat version.txt)
+echo VERSION=${VERSION} > version.env''')
+    environmentVariables {
+        propertiesFile('version.env')
+    }
   }
+  publishers {
+        git {
+            pushOnlyIfSuccess()
+            tag('origin', '$VERSION') {
+                message('Tag $VERSION')
+                create()
+                update()
+            }
+        }
+    }
 }
