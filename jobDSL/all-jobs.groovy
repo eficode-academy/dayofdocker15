@@ -82,6 +82,7 @@ job('test-browser') {
   steps {
     shell('''#!/bin/bash -x
 sudo docker kill testing-app
+sudo docker rm -f testing-app
 cid=$(sudo docker run -d --name testing-app -p 8000:8000  http-app)
 echo "cid=$cid" > props.env''')
     environmentVariables {
@@ -89,7 +90,7 @@ echo "cid=$cid" > props.env''')
     }
     shell('''#!/bin/bash -x
 cip=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${cid})
-sudo docker run --rm siege-engine http://$cip:8000/ > output''')
+sudo docker run --rm siege-engine http://$cip:8000/ > output 2>&1''')
 
     shell('''#!/bin/bash
 avail=$(cat output | grep Availability)
@@ -102,7 +103,7 @@ else
 \techo "Availability too low"
 \texit 1
 fi''')
-    groovyCommand '''def columns = ["Transactions","Elapsed time","Data transferred","Response time","Transaction rate","Throughput","Concurrency"]
+    groovyCommand('''def columns = ["Transactions","Elapsed time","Data transferred","Response time","Transaction rate","Throughput","Concurrency"]
 
 
 def input = new File('output')
@@ -126,7 +127,7 @@ output.delete()
 map.keySet().each {output.append(it+",")}
 output.append("\\n")
 map.values().each {output.append(it+",")}
-'''
+''')
   shell('''sudo docker kill ${cid}
 sudo docker rm ${cid}''')
   }
