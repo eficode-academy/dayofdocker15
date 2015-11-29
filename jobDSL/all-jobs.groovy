@@ -152,4 +152,13 @@ job('release-browser') {
   triggers {
         upstream('test-browser', 'UNSTABLE')
     }
+    steps {
+      shell('''#!/bin/bash
+sudo docker tag -f http-app drbosse/http-app:latest
+# no git here yet
+# sudo docker tag http-app/http-app:$(git describe)
+sudo docker rm -f deploy-app
+sudo docker run -d --name deploy-app -p 81:8000 drbosse/http-app:latest
+'''
+    }
 }
