@@ -3,7 +3,7 @@
 //GITHUB_USERNAME="githubusername"
 
 // Variable re-used in the jobs
-PROJ_NAME="webbrowser"
+PROJ_NAME="webserver"
 REPO_URL="https://github.com/${GITHUB_USERNAME}/dayofdocker15.git"
 
 
@@ -135,7 +135,7 @@ EOT
 echo "Run parse.groovy with docker"
 ls -al
 pwd -P
-rm output.csv
+rm -f output.csv
 echo "Running /source/parse.groovy"
 sudo docker run -t --rm -v /opt/containers/jenkins_home/jobs/test-browser/workspace:/source webratio/groovy parse.groovy
 cat output.csv
