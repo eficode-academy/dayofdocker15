@@ -31,7 +31,6 @@ version\\.txt'''
       keepSystemVariables(true)
       keepBuildVariables(true)
       env('GITHUB_USERNAME', "${GITHUB_USERNAME}")
-      env('PROJ_NAME', "${PROJ_NAME}")
     }
   }
   triggers {
@@ -60,7 +59,7 @@ sudo docker rm ${cid}''')
         condition('SUCCESS')
         parameters{
           predefinedProp('GITHUB_USERNAME', '${GITHUB_USERNAME}')
-          predefinedProp('PROJ_NAME', '${PROJ_NAME}')
+          predefinedProp('UPSTREAM_JOB_NAME', '${JOB_NAME}')
           gitRevision(false)
           propertiesFile('props.env', failTriggerOnMissing = true)
         }
@@ -139,7 +138,7 @@ ls -al
 pwd -P
 rm -f output.csv
 echo "Running /source/parse.groovy"
-sudo docker run -t --rm -v /opt/containers/jenkins_home/jobs/2.test-${PROJ_NAME}_GEN)/workspace:/source webratio/groovy parse.groovy
+sudo docker run -t --rm -v /opt/containers/jenkins_home/jobs/${UPSTREAM_JOB_NAME}/workspace:/source webratio/groovy parse.groovy
 cat output.csv
 ''')
   }
