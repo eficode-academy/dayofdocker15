@@ -1,13 +1,13 @@
 // Your github username
 // It should come as a parameter to this seed job
-//GITHUB_USERNAME="drbosse"
+//GITHUB_USERNAME="githubusername"
 
 // Variable re-used in the jobs
-PROJ_NAME="mybrowser"
+PROJ_NAME="webbrowser"
 REPO_URL="https://github.com/${GITHUB_USERNAME}/dayofdocker15.git"
 
 
-job("build-${PROJ_NAME}_GEN") {
+job("1.build-${PROJ_NAME}_GEN") {
   logRotator( -1, 5 ,-1 ,-1 )
   scm {
     git {
@@ -26,12 +26,19 @@ version\\.txt'''
       }
     }
   }
+  properties {
+    environmentVariables {
+      keepSystemVariables(true)
+      keepBuildVariables(true)
+      env('GITHUB_USERNAME', "${GITHUB_USERNAME}")
+    }
+  }
   triggers {
     scm('* * * * *')
   }
   steps{
     shell('''#!/bin/bash -x
-echo "version=$(cat version.txt)" > props.env
+echo "version=\$(cat version.txt)" > props.env
 
 cd GoWebServer
 imageid=$(sudo docker build -q -t ${GITHUB_USERNAME}/http-app:snapshot . 2>/dev/null | awk '/Successfully built/{print $NF}')
@@ -48,9 +55,10 @@ sudo docker rm ${cid}''')
   }
   publishers {
     downstreamParameterized {
-      trigger("test-${PROJ_NAME}_GEN") {
+      trigger("2.test-${PROJ_NAME}_GEN") {
         condition('SUCCESS')
         parameters{
+          predefinedProp('GITHUB_USERNAME', '${GITHUB_USERNAME}')
           gitRevision(false)
           propertiesFile('props.env', failTriggerOnMissing = true)
         }
@@ -61,7 +69,7 @@ sudo docker rm ${cid}''')
 
 
 
-job("test-${PROJ_NAME}_GEN") {
+job("2.test-${PROJ_NAME}_GEN") {
   logRotator( -1, 40 ,-1 ,-1 )
   steps {
     shell('''#!/bin/bash -x
@@ -144,11 +152,11 @@ cat output.csv
       }
     }
     downstreamParameterized {
-      trigger("release-${PROJ_NAME}_GEN") {
+      trigger("3.release-${PROJ_NAME}_GEN") {
         condition('SUCCESS')
         parameters{
           predefinedProp('VERSION', '${version}')
-        }
+          predefinedProp('GITHUB_USERNAME', '${GITHUB_USERNAME}')        }
       }
     }
   }
@@ -156,20 +164,20 @@ cat output.csv
 
 
 
-job("release-${PROJ_NAME}_GEN") {
+job("3.release-${PROJ_NAME}_GEN") {
   logRotator( -1, 5 ,-1 ,-1 )
   steps {
     shell('''#!/bin/bash
-sudo docker tag -f drbosse/http-app:stable drbosse/http-app:latest 
-sudo docker tag -f drbosse/http-app:stable drbosse/http-app:$VERSION 
+sudo docker tag -f ${GITHUB_USERNAME}/http-app:stable ${GITHUB_USERNAME}/http-app:latest 
+sudo docker tag -f ${GITHUB_USERNAME}/http-app:stable ${GITHUB_USERNAME}/http-app:$VERSION 
 # no git here yet
 # sudo docker tag http-app/http-app:$(git describe)
 sudo docker rm -f deploy-app
-sudo docker run -d --name deploy-app -p 81:8000 drbosse/http-app:latest
+sudo docker run -d --name deploy-app -p 81:8000 ${GITHUB_USERNAME}/http-app:latest
 ''')
     shell('''
-sudo docker ps |grep drbosse/http-app
-sudo docker images |grep drbosse/http-app
+sudo docker ps |grep ${GITHUB_USERNAME}/http-app
+sudo docker images |grep ${GITHUB_USERNAME}/http-app
 ''')
   }
 }
@@ -206,3 +214,4 @@ buildPipelineView("${PROJ_NAME}-pipeline_GEN") {
   showPipelineDefinitionHeader()
   refreshFrequency(60)
 }
+
