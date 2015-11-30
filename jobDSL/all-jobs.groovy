@@ -1,124 +1,118 @@
-job('tag-version'){
-  logRotator( -1, 5 ,-1 ,-1 )
-  scm {
-    git {
-      remote {
-        name('origin')
-        url('https://github.com/drbosse/dayofdocker15.git')
-      }
-      branch('master')
-      configure {
-        it / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
-          'includedRegions' 'version.txt'
-        }
-      }
-    }
-  }
-  triggers {
-    scm('H/5 * * * *')
-  }
-  steps {
-    shell('''#!/bin/bash
-[ ! -f version.txt ] && exit 1
-VERSION=$(cat version.txt)
-echo VERSION=${VERSION} > version.env''')
-    environmentVariables {
-        propertiesFile('version.env')
-    }
-  }
-  publishers {
-        git {
-            pushOnlyIfSuccess()
-            tag('origin', '$VERSION') {
-                message('Tag $VERSION')
-                create()
-                update()
-            }
-        }
-    }
-}
+// Your github username
+// It should come as a parameter to this seed job
+//GITHUB_USERNAME="drbosse"
 
-job('build-browser') {
+// Variable re-used in the jobs
+PROJ_NAME="mybrowser"
+REPO_URL="https://github.com/${GITHUB_USERNAME}/dayofdocker15.git"
+
+
+job("build-${PROJ_NAME}_GEN") {
   logRotator( -1, 5 ,-1 ,-1 )
   scm {
     git {
       remote {
         name('origin')
-        url('https://github.com/drbosse/dayofdocker15.git')
+        url("${REPO_URL}")
       }
       branch('master')
       configure {
         it / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
           'includedRegions' '''GoWebBrowser/.*\\.go
 GoWebBrowser/.*\\.html
-GoWebBrowser/.*\\.png'''
+GoWebBrowser/.*\\.png
+version\\.txt'''
         }
       }
     }
   }
   triggers {
-    scm('H/5 * * * *')
+    scm('* * * * *')
   }
   steps{
     shell('''#!/bin/bash -x
+echo "version=$(cat version.txt)" > props.env
+
 cd GoWebServer
-sudo docker build -t http-app .
+imageid=$(sudo docker build -q -t ${GITHUB_USERNAME}/http-app:snapshot . 2>/dev/null | awk '/Successfully built/{print $NF}')
+
 sudo docker rm -f testing-app
-cid=$(sudo docker run -d --name testing-app -p 8001:8000  http-app)
-echo "cid=$cid" > ../props.env
+cid=$(sudo docker run -d --name testing-app -p 8001:8000 ${GITHUB_USERNAME}/http-app:snapshot)
+echo "cid=$cid" >> ../props.env
+echo "IMAGEID=$imageid" >> ../props.env
 cip=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${cid})
 sudo docker run --rm siege-engine -g http://$cip:8000/
 [ $? -ne 0 ] && exit 1
 sudo docker kill ${cid}
 sudo docker rm ${cid}''')
   }
+  publishers {
+    downstreamParameterized {
+      trigger("test-${PROJ_NAME}_GEN") {
+        condition('SUCCESS')
+        parameters{
+          gitRevision(false)
+          propertiesFile('props.env', failTriggerOnMissing = true)
+        }
+      }
+    }
+  }
 }
 
-job('test-browser') {
-  logRotator( -1, 5 ,-1 ,-1 )
-  triggers {
-    upstream('build-browser', 'UNSTABLE')
-  }
+
+
+job("test-${PROJ_NAME}_GEN") {
+  logRotator( -1, 40 ,-1 ,-1 )
   steps {
     shell('''#!/bin/bash -x
-sudo docker kill testing-app
 sudo docker rm -f testing-app
-cid=$(sudo docker run -d --name testing-app -p 8000:8000  http-app)
-echo "cid=$cid" > props.env''')
+testing_cid=$(sudo docker run -d --name testing-app -p 8000:8000  $IMAGEID)
+echo "testing_cid=$testing_cid" > props.env
+''')
     environmentVariables {
       propertiesFile('props.env')
     }
     shell('''#!/bin/bash -x
-cip=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${cid})
-sudo docker run --rm siege-engine http://$cip:8000/ > output 2>&1''')
-
+cip=$(sudo docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${testing_cid})
+sudo docker run --rm siege-engine http://$cip:8000/ > output 2>&1
+''')
     shell('''#!/bin/bash
 avail=$(cat output | grep Availability)
 echo $avail
 if [[ "$avail" == *"100.00"* ]]
 then
-\techo "Availability high enough"
-\texit 0
+	echo "Availability high enough"
+    sudo docker tag $IMAGEID ${GITHUB_USERNAME}/http-app:stable
+	exit 0
 else
-\techo "Availability too low"
-\texit 1
-fi''')
-    groovyCommand('''def columns = ["Transactions","Elapsed time","Data transferred","Response time","Transaction rate","Throughput","Concurrency"]
+	echo "Availability too low"
+	exit 1
+fi
+''')
+    shell('''#We want a groovy script for parsing siege output into CSV
+#As this job is not actually pulling code from git, we are just creating the groovy script here to make life easier.
+
+#Remove any old version
+rm -f parse.groovy
+
+#Cat the whole groovy script to a file
+cat <<EOT >> parse.groovy
+def columns = ["Transactions","Elapsed time","Data transferred","Response time","Transaction rate","Throughput","Concurrency"]
 
 
 def input = new File('output')
 def map = new LinkedHashMap<String, String>()
 
 input.eachLine { line ->
-columns.each { column ->
+  columns.each { column ->
     if(line.startsWith(column)){
-        def val = (line =~ /[\\w ]*:[\\s]*([\\d.]*)[ \\n]?.*/)
-        if(val.matches())
-            map.put(column, val.group(1))
-        else
-            println "Failed for " + line
+      def val = (line =~ /[\\w ]*:[\\s]*([\\d.]*)[ \\n]?.*/)
+      if(val.matches())
+        map.put(column, val.group(1))
+      else
+        println "Failed for " + line
     }
-}
+  }
 }
 
 def output = new File('output.csv')
@@ -127,38 +121,88 @@ output.delete()
 map.keySet().each {output.append(it+",")}
 output.append("\\n")
 map.values().each {output.append(it+",")}
+EOT
 ''')
-  shell('''sudo docker kill ${cid}
-sudo docker rm ${cid}''')
+    shell('''
+echo "Run parse.groovy with docker"
+ls -al
+pwd -P
+rm output.csv
+echo "Running /source/parse.groovy"
+sudo docker run -t --rm -v /opt/containers/jenkins_home/jobs/test-browser/workspace:/source webratio/groovy parse.groovy
+cat output.csv
+''')
   }
-
   publishers {
     plotBuildData {
-        plot('siege_data', 'output.csv') {
-            title('Siege results')
-            numberOfBuilds(10)
-            csvFile('output.csv') {
-                includeColumns('Response time')
-                showTable()
-            }
+      plot('siege_data', 'output.csv') {
+        title('Siege results')
+        logarithmic()
+        csvFile('output.csv') {
+          includeColumns('Transaction rate,Availability')
         }
+      }
+    }
+    downstreamParameterized {
+      trigger("release-${PROJ_NAME}_GEN") {
+        condition('SUCCESS')
+        parameters{
+          predefinedProp('VERSION', '${version}')
+        }
+      }
     }
   }
 }
 
 
-job('release-browser') {
+
+job("release-${PROJ_NAME}_GEN") {
   logRotator( -1, 5 ,-1 ,-1 )
-  triggers {
-        upstream('test-browser', 'UNSTABLE')
-    }
-    steps {
-      shell('''#!/bin/bash
-sudo docker tag -f http-app drbosse/http-app:latest
+  steps {
+    shell('''#!/bin/bash
+sudo docker tag -f drbosse/http-app:stable drbosse/http-app:latest 
+sudo docker tag -f drbosse/http-app:stable drbosse/http-app:$VERSION 
 # no git here yet
 # sudo docker tag http-app/http-app:$(git describe)
 sudo docker rm -f deploy-app
 sudo docker run -d --name deploy-app -p 81:8000 drbosse/http-app:latest
 ''')
+    shell('''
+sudo docker ps |grep drbosse/http-app
+sudo docker images |grep drbosse/http-app
+''')
+  }
+}
+
+
+
+
+
+listView("${PROJ_NAME}-jobs_GEN") {
+  description("All ${PROJ_NAME} project related jobs")
+  jobs {
+    regex(".*-${PROJ_NAME}.*")
+  }
+  columns {
+    status()
+    weather()
+    name()
+    lastSuccess()
+    lastFailure()
+    lastDuration()
+    buildButton()
     }
+}
+
+
+
+buildPipelineView("${PROJ_NAME}-pipeline_GEN") {
+  title("Project ${PROJ_NAME} CI Pipeline")
+  displayedBuilds(50)
+  selectedJob("build-${PROJ_NAME}_GEN")
+  alwaysAllowManualTrigger()
+  showPipelineParametersInHeaders()
+  showPipelineParameters()
+  showPipelineDefinitionHeader()
+  refreshFrequency(60)
 }
