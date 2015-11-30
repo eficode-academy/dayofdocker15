@@ -10,3 +10,7 @@ durable-task
 scm-api
 git-client
 locale
+envinject
+groovy
+plot
+parameterized-trigger
