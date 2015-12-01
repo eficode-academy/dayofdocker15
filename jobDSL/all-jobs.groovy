@@ -6,8 +6,10 @@
 PROJ_NAME="webserver"
 REPO_URL="https://github.com/${GITHUB_USERNAME}/dayofdocker15.git"
 
+// Configured to use to define the build pipeline as well
+FIRST_JOB_NAME="1.build-${PROJ_NAME}_GEN"
 
-job("1.build-${PROJ_NAME}_GEN") {
+job("${FIRST_JOB_NAME}") {
   logRotator( -1, 5 ,-1 ,-1 )
   scm {
     git {
@@ -59,7 +61,6 @@ sudo docker rm ${cid}''')
         condition('SUCCESS')
         parameters{
           predefinedProp('GITHUB_USERNAME', '${GITHUB_USERNAME}')
-          predefinedProp('UPSTREAM_JOB_NAME', '${JOB_NAME}')
           gitRevision(false)
           propertiesFile('props.env', failTriggerOnMissing = true)
         }
@@ -138,7 +139,7 @@ ls -al
 pwd -P
 rm -f output.csv
 echo "Running /source/parse.groovy"
-sudo docker run -t --rm -v /opt/containers/jenkins_home/jobs/${UPSTREAM_JOB_NAME}/workspace:/source webratio/groovy parse.groovy
+sudo docker run -t --rm -v /opt/containers/jenkins_home/jobs/${JOB_NAME}/workspace:/source webratio/groovy parse.groovy
 cat output.csv
 ''')
   }
@@ -208,11 +209,10 @@ listView("${PROJ_NAME}-jobs_GEN") {
 buildPipelineView("${PROJ_NAME}-pipeline_GEN") {
   title("Project ${PROJ_NAME} CI Pipeline")
   displayedBuilds(50)
-  selectedJob("build-${PROJ_NAME}_GEN")
+  selectedJob("${FIRST_JOB_NAME}")
   alwaysAllowManualTrigger()
   showPipelineParametersInHeaders()
   showPipelineParameters()
   showPipelineDefinitionHeader()
   refreshFrequency(60)
 }
-
