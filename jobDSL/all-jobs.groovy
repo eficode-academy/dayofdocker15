@@ -20,9 +20,9 @@ job("${FIRST_JOB_NAME}") {
       branch('master')
       configure {
         it / 'extensions' << 'hudson.plugins.git.extensions.impl.PathRestriction' {
-          'includedRegions' '''GoWebBrowser/.*\\.go
-GoWebBrowser/.*\\.html
-GoWebBrowser/.*\\.png
+          'includedRegions' '''GoWebServer/.*\\.go
+GoWebServer/.*\\.html
+GoWebServer/.*\\.png
 version\\.txt'''
         }
       }
@@ -92,7 +92,7 @@ echo $avail
 if [[ "$avail" == *"100.00"* ]]
 then
 	echo "Availability high enough"
-    sudo docker tag $IMAGEID ${GITHUB_USERNAME}/http-app:stable
+    sudo docker tag -f $IMAGEID ${GITHUB_USERNAME}/http-app:stable
 	exit 0
 else
 	echo "Availability too low"
